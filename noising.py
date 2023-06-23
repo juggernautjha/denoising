@@ -1,3 +1,8 @@
+def is_interactive():
+    import __main__ as main
+    return not hasattr(main, '__file__')
+
+
 import pydub
 # import derivative2_train_data  as derivative
 import os, sys, glob, random
@@ -6,11 +11,13 @@ import pydub
 import typing
 from typing import List, Dict, Union, Tuple
 import json
-from tqdm.notebook import tqdm
+if is_interactive():
+    from tqdm.notebook import tqdm
+else: from tqdm import tqdm
 from acoustics import generator
 
 
-COLORS = ['white', 'blue', 'pink', 'brown', ]
+COLORS = ['white', 'blue', 'pink', 'brown', 'violet']
 
 def overlay_noise(input_file : str, quiet_by_dB : int, color : str = 'white', pad_to :int = 140) -> Tuple:
     orig_sound = pydub.AudioSegment.from_file(input_file, format="flac")
@@ -75,7 +82,35 @@ def save_overlaid_dataset(input_files : List[str], num_samples : int, quiet_by_d
     json.dump(dataset, f)
     return
 
+
+def chop_overlay_spit(input_file : str, window_size : int, colors : List[str] = ['white',  'blue', 'pink', 'brown', 'violet']) -> Tuple:
+    '''
+    Takes in an input file, splits it into multiple (possibly overlapping windows) of size window_size, and then overlays some noise (randomly picked from the available noise types)
+    '''
+    clear = []
+    noisy = []
+    orig_sound = pydub.AudioSegment.from_file(input_file, format="flac")
+    orig_sound = orig_sound.get_array_of_samples()
+    diff = window_size - len(orig_sound)%window_size 
+    orig_sound = list(orig_sound) + [0]*diff
+    orig_sound = np.array(orig_sound)
+    # orig_sound = orig_sound.concat([0]*diff)
+    orig_chunks = np.split(orig_sound, len(orig_sound)//window_size)    
+    for i in tqdm(orig_chunks):
+        clear.append(i)
+        color = random.randint(0, len(colors)-1)
+        noise = generator.noise(window_size,color=colors[color])
+        noisy.append(i+noise)
+    # print(len(clear), len(noisy))
+    return clear, noisy
+
+
+
+
+
+
+
 if __name__ == '__main__':
     INPUT_DIR = 'samples'
     files = glob.glob(f'{INPUT_DIR}/*.flac')
-    save_overlaid_dataset(files, 3, 15, 'dataset.json', 'overlaid')
+    for i in files: chop_overlay_spit(i, 49000)
