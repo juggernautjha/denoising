@@ -96,7 +96,8 @@ def chop_overlay_spit(input_file : str, window_size : int, colors : List[str] = 
     orig_sound = np.array(orig_sound)
     # orig_sound = orig_sound.concat([0]*diff)
     orig_chunks = np.split(orig_sound, len(orig_sound)//window_size)    
-    for i in tqdm(orig_chunks):
+    for i in orig_chunks:
+        
         clear.append(i)
         color = random.randint(0, len(colors)-1)
         noise = generator.noise(window_size,color=colors[color])
