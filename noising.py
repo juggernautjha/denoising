@@ -87,7 +87,7 @@ def normalize_array(lst: np.ndarray) -> List[float]:
     mx = max(lst)
     mn = min(lst)
     dv = mx - mn
-    return np.array([(i-mn)/dv for i in lst])
+    return np.array([(i-mn)/dv if dv != 0 else i for i in lst])
 
 
 def chop_overlay_spit(input_file : str, window_size : int, colors : List[str] = ['white',  'blue', 'pink', 'brown', 'violet']) -> Tuple:
