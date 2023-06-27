@@ -82,6 +82,13 @@ def save_overlaid_dataset(input_files : List[str], num_samples : int, quiet_by_d
     json.dump(dataset, f)
     return
 
+def normalize_array(lst: np.ndarray) -> List[float]:
+    lst = list(lst)
+    mx = max(lst)
+    mn = min(lst)
+    dv = mx - mn
+    return np.array([(i-mn)/dv for i in lst])
+
 
 def chop_overlay_spit(input_file : str, window_size : int, colors : List[str] = ['white',  'blue', 'pink', 'brown', 'violet']) -> Tuple:
     '''
@@ -97,11 +104,11 @@ def chop_overlay_spit(input_file : str, window_size : int, colors : List[str] = 
     # orig_sound = orig_sound.concat([0]*diff)
     orig_chunks = np.split(orig_sound, len(orig_sound)//window_size)    
     for i in orig_chunks:
-        
-        clear.append(i)
+
+        clear.append(normalize_array(i))
         color = random.randint(0, len(colors)-1)
         noise = generator.noise(window_size,color=colors[color])
-        noisy.append(i+noise)
+        noisy.append(normalize_array(i+noise))
     # print(len(clear), len(noisy))
     return clear, noisy
 
@@ -114,4 +121,5 @@ def chop_overlay_spit(input_file : str, window_size : int, colors : List[str] = 
 if __name__ == '__main__':
     INPUT_DIR = 'samples'
     files = glob.glob(f'{INPUT_DIR}/*.flac')
-    for i in files: chop_overlay_spit(i, 49000)
+    a, b =  chop_overlay_spit(files[0], 128)
+    print(a[0], b[0])
